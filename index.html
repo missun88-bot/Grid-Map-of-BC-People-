@@ -478,5 +478,114 @@ if('IntersectionObserver' in window){
   selectRegions(locked, activeGroup);
 })();
 </script>
+ <!-- Keep regional highlights visible below the chapter navigation. -->
+<style>
+:root {
+  --chapter-nav-height: 64px;
+  --highlight-bar-height: 64px;
+}
+
+.chapter-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+#guided-highlights.guided-controls {
+  position: sticky;
+  top: var(--chapter-nav-height);
+  z-index: 19;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+
+  margin: 0;
+  padding: 8px max(22px, calc((100% - 1136px) / 2));
+
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 3px 8px rgba(29, 58, 47, 0.04);
+}
+
+#guided-highlights button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 10px 16px;
+}
+
+#guided-highlights button[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--card);
+}
+
+/* Keep section headings visible when using chapter links. */
+html {
+  scroll-padding-top: calc(
+    var(--chapter-nav-height) +
+    var(--highlight-bar-height) +
+    16px
+  );
+}
+
+section[id] {
+  scroll-margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  #guided-highlights.guided-controls {
+    gap: 6px;
+    padding: 7px 12px;
+  }
+
+  #guided-highlights button {
+    font-size: 11px;
+    padding: 9px 10px;
+  }
+}
+</style>
+
+<script>
+(function () {
+  const chapterNav = document.querySelector('.chapter-nav');
+  const highlights = document.getElementById('guided-highlights');
+
+  if (!chapterNav || !highlights) return;
+
+  // Move the buttons outside the map section so they stay
+  // visible while scrolling through the rest of the page.
+  chapterNav.after(highlights);
+
+  // Measure both rows so they never overlap.
+  function updateStickyHeights() {
+    const root = document.documentElement;
+
+    root.style.setProperty(
+      '--chapter-nav-height',
+      chapterNav.getBoundingClientRect().height + 'px'
+    );
+
+    root.style.setProperty(
+      '--highlight-bar-height',
+      highlights.getBoundingClientRect().height + 'px'
+    );
+  }
+
+  updateStickyHeights();
+
+  window.addEventListener('resize', updateStickyHeights);
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(updateStickyHeights);
+    observer.observe(chapterNav);
+    observer.observe(highlights);
+  }
+})();
+</script>
 </body>
 </html>
