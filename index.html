@@ -318,5 +318,165 @@ if('IntersectionObserver' in window){
 }
 
 </script>
+ <!-- Regional highlight controls: keep controls beside the maps -->
+<style>
+.guided-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 24px 0 14px;
+}
+
+.guided-controls button {
+  font-size: 14px;
+  padding: 11px 18px;
+}
+
+.guided-controls button[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--card);
+}
+
+#selection-note {
+  font-size: 16px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+#selection-note strong {
+  color: var(--ink);
+}
+
+.mobile-group-context {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .guided-controls {
+    gap: 7px;
+  }
+
+  .guided-controls button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  #selection-note {
+    font-size: 14px;
+  }
+
+  .mobile-group-context {
+    display: block;
+    text-align: left;
+    background: var(--card);
+    border-left: 3px solid var(--teal);
+    padding: 12px 14px;
+    font-size: 13px;
+    margin: 0 0 20px;
+  }
+
+  .mobile-group-context:empty {
+    display: none;
+  }
+}
+</style>
+
+<script>
+(function () {
+  if (document.getElementById('guided-highlights')) return;
+
+  const controls = document.querySelector('#maps .map-controls');
+  const south = document.querySelector('[data-group="south"]');
+  const north = document.querySelector('[data-group="north"]');
+  const note = document.getElementById('selection-note');
+  const populationPanel = document.getElementById('p2');
+
+  if (!controls || !south || !north || !note || !populationPanel) {
+    return;
+  }
+
+  // Move the existing story buttons directly above the map controls.
+  const bar = document.createElement('div');
+  bar.id = 'guided-highlights';
+  bar.className = 'guided-controls';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', 'Explore regional stories');
+
+  const showAll = document.createElement('button');
+  showAll.type = 'button';
+  showAll.textContent = 'All regions';
+  showAll.setAttribute('aria-pressed', 'true');
+
+  south.textContent = 'Four most populous';
+  north.textContent = 'Five largest by land';
+
+  bar.append(showAll, south, north);
+  controls.before(bar);
+
+  // Repeat the selected explanation above the second map on mobile.
+  const mobileNote = document.createElement('p');
+  mobileNote.className = 'mobile-group-context';
+  populationPanel.prepend(mobileNote);
+
+  // Preserve the existing region-menu, map, chart and table interactions.
+  const previousSelectRegions = selectRegions;
+
+  selectRegions = function (indices, group = null) {
+    previousSelectRegions(indices, group);
+
+    showAll.setAttribute(
+      'aria-pressed',
+      String(indices.length === 0)
+    );
+
+    if (group === 'south') {
+      note.innerHTML =
+        '<strong>Four most populous regions.</strong> ' +
+        'Together they hold ' +
+        Math.round(top4Pop) +
+        '% of B.C.’s population on just ' +
+        pc(top4Land) +
+        ' of its land.';
+    } else if (group === 'north') {
+      note.innerHTML =
+        '<strong>Five largest regions by land.</strong> ' +
+        'Together they cover ' +
+        Math.round(big5Land) +
+        '% of B.C. but hold only ' +
+        pc(big5Pop) +
+        ' of its population.';
+    }
+
+    mobileNote.textContent = indices.length
+      ? note.textContent
+      : '';
+  };
+
+  // Replace the old handlers to remove the automatic scroll jump.
+  south.onclick = function () {
+    if (activeGroup === 'south') {
+      selectRegions([]);
+    } else {
+      selectRegions(top4, 'south');
+    }
+  };
+
+  north.onclick = function () {
+    if (activeGroup === 'north') {
+      selectRegions([]);
+    } else {
+      selectRegions(big5, 'north');
+    }
+  };
+
+  showAll.onclick = function () {
+    selectRegions([]);
+  };
+
+  selectRegions(locked, activeGroup);
+})();
+</script>
 </body>
 </html>
